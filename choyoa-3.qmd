@@ -1,0 +1,393 @@
+---
+title: "CHOYOA 3"
+author: "Benise Limon"
+format: html
+editor: visual
+---
+
+# Get Started
+
+```{r}
+library(ggplot2)
+library(tibble)
+```
+
+# Polygon Tricks 
+
+## Set up
+
+```{r}
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(tibble)
+library(ggplot2)
+library(ambient)
+library(tictoc)
+library(ggthemes)
+library(gifski)
+```
+
+```{r create-square}
+#creating the object "square" saved as a tibble that contains x and y columns specifying the coordinates for a square 
+square <- tibble(
+  x = c(0, 1, 1, 0, 0),
+  y = c(0, 0, 1, 1, 0),
+  #specifies the length of the edge connecting one point to the next one 
+  seg_len = c(1, 1, 1, 1, 0)
+)
+```
+
+```{r display-square}
+#define a plotting function called "show_polygon" to display a polygon
+show_polygon <- function(polygon, show_vertices = TRUE, ...) {
+  #create an object called "pic" that is a polygon 
+  pic <- ggplot(polygon, aes(x, y)) +
+    #making the lines black 
+    geom_polygon(colour = "green", fill = NA, show.legend = FALSE, ...) + 
+    coord_equal() +
+    #assigning the theme so there is nothing displayed besides the edges 
+    theme_void() 
+  # showing the points on nodes where edges connect  
+  if(show_vertices == TRUE) {
+    #making the points black and defining the point size 
+    pic <- pic + geom_point(colour = "green", size = 1)
+  }
+  return(pic)
+}
+
+# using function to display the polygon 
+show_polygon(square)
+```
+
+```{r break-edges}
+#create a function called "sample_edge" to break one of the edges (not the final point) in two 
+sample_edge <- function(polygon) {
+  #break the edge only one time (learned that the hard way)
+  sample(nrow(polygon), 1, prob = polygon$seg_len)
+}
+```
+
+```{r compute-new-lengths}
+#create a function called "sample_edge" to compute the length of these two new edges
+edge_length <- function(x1, y1, x2, y2) {
+  #calculating euclidean distance with new coordinates 
+  sqrt((x1 - x2)^2 + (y1 - y2)^2)
+}
+```
+
+```{r random-unif}
+#create a function called "edge_noise" to add a number used to scale the amount of noise
+edge_noise <- function(size) {
+  #uniform distribution with minimum -2 and maximum 2 
+  runif(1, min = -size/2, max = size/2)
+}
+```
+
+```{r create-edge-breaks}
+# define a function called "insert_edge" that breaks an edge into two edges and uses edge_noise to scale the amount of noise 
+insert_edge <- function(polygon, noise) {
+  
+  # sample and edge and remember its length
+  ind <- sample_edge(polygon)
+  len <- polygon$seg_len[ind]
+  
+  # one endpoint of the old edge
+  last_x <- polygon$x[ind]
+  last_y <- polygon$y[ind]
+  
+  # the other endpoint of the old edge
+  next_x <- polygon$x[ind + 1]
+  next_y <- polygon$y[ind + 1]
+  
+  # location of the new point to be inserted: noise 
+  # is scaled proportional to the length of the old edge
+  new_x <- (last_x + next_x) / 2 + edge_noise(len * noise)
+  new_y <- (last_y + next_y) / 2 + edge_noise(len * noise)
+  
+  # the new row for insertion into the tibble, 
+  # containing coords and length of the 'new' edge
+  new_row <- tibble(
+    x = new_x,
+    y = new_y,
+    seg_len = edge_length(new_x, new_y, next_x, next_y)
+  )
+  
+  # update the length of the 'old' edge
+  polygon$seg_len[ind] <- edge_length(
+    last_x, last_y, new_x, new_y
+  )
+  
+  # insert a row into the tibble
+  bind_rows(
+    polygon[1:ind, ],
+    new_row,
+    polygon[-(1:ind), ]
+  )
+}
+```
+
+```{r display-edge-breaks}
+#display polygons with edge breaks 
+set.seed(2)
+polygon <- square 
+#define shape as a square  
+polygon <- insert_edge(polygon, noise = .4); show_polygon(polygon)
+#insert an edge break 
+polygon <- insert_edge(polygon, noise = .5); show_polygon(polygon)
+# insert a second edge break 
+polygon <- insert_edge(polygon, noise = .6); show_polygon(polygon)
+```
+
+```{r new-polygons}
+# define a function called "grow_polygon" that essentially repeats insert_edge function to make a polygon with a defined amount of edges
+grow_polygon <- function(polygon, iterations, noise, seed = NULL) {
+  if(!is.null(seed)) set.seed(seed)
+  for(i in 1:iterations) polygon <- insert_edge(polygon, noise)
+  return(polygon)
+}
+```
+
+```{r display-new-polygons}
+#call the function to display a polygon with 30 edge breaks and no defined nodes 
+square |> 
+  grow_polygon(iterations = 10, noise = .5, seed = 2) |> 
+  #display nodes to see where the edges were broken
+  show_polygon(show_vertices = T)
+#call the function to display a polygon with 100 edge breaks and no defined nodes 
+square |> 
+  grow_polygon(iterations = 150, noise = .5, seed = 2) |> 
+  show_polygon(show_vertices = F)
+#call the function to display a polygon with 1000 edge breaks and no defined nodes 
+square |> 
+  grow_polygon(iterations = 2000, noise = .5, seed = 2) |> 
+  show_polygon(show_vertices = F)
+```
+
+```{r new-functions}
+# define a function called "grow_multipolygon" to create many deformed polygons in the same area
+grow_multipolygon <- function(base_shape, n, seed = NULL, ...) {
+  if(!is.null(seed)) set.seed(seed)
+  polygons <- list()
+  for(i in 1:n) {
+    polygons[[i]] <- grow_polygon(base_shape, ...)
+  }
+  polygons <- bind_rows(polygons, .id = "id")
+  polygons
+}
+
+#define a function called "show_multipolygon" that plots many polygons with a low opacity
+show_multipolygon <- function(polygon, fill, alpha = .02, ...) {
+  ggplot(polygon, aes(x, y, group = id)) +
+    geom_polygon(colour = NA, alpha = alpha, fill = fill, ...) + 
+    coord_equal() + 
+    theme_void()
+}
+```
+
+```{r}
+#use tic function to store the start time 
+tic()
+# create an object building off the square tibble 
+dat <- square |> 
+  # 100 edge breaks 
+  grow_polygon(iterations = 50, noise = .5, seed = 2) |>
+    # add 50 polygons with 1000 edge breaks   
+  grow_multipolygon(n = 100, iterations = 500, noise = 1, seed = 2)
+#use toc function to note the current timer and compute elapsed time since tic ran
+toc()
+```
+
+```{r display-multipolygon}
+#displaying new multipolygon in blue 
+show_multipolygon(dat, fill = "blue")
+```
+
+## Exercise 1 
+
+**Exercise**
+
+1.  Let\'s look at single polygons first. All the code you need to work with those is included in the `grow-polygon.R` function. Try modifying the `iterations`, `noise`, and `seed` arguments to see what kind of output is created at different parameter values.
+
+Iterations: 1 iterations is the base square with one edge broken. An iteration is an additional edge break. For every one iteration you add, one of the edges is broken and split into two. For every iteration, there will be (2 \* (# of iternations)) + 1 = number of nodes.
+
+Noise: Increasing nodes increasing the intensity of bent edges when an iteration is added. For example, all else held constant at iterations = 3 and seed = 2, noise of 0.1 will closely resemble the base square because the bent edges are not that dramatic. If the noise is 5, the polygon will be hardly recognizable because the edges will have bent so much that the polygon changes shape dramatically.
+
+Seed: In no particular fashion, changing the seed number changes where the edges are broken and drastically changes the shape. There is no direct relationship between shape change and seed change, it is random.
+
+```{r}
+square |> 
+  grow_polygon(iterations = 3, noise = .6, seed = 2) |> 
+  show_polygon(show_vertices = T)
+```
+
+```{r}
+square |> 
+  grow_polygon(iterations = 3, noise = .4, seed = 2) |> 
+  show_polygon(show_vertices = T)
+```
+
+2.  The `grow-multipolygons.R` file contains the extra machinery to create these textured plots. Try playing around with the code for this. I\'ve tweaked the parameter settings so that it runs faster than the code shown here, but doesn\'t produce output that looks quite as nice.
+
+I edited the original code to limit the number of iterations in the original polygon, add more polygons, and limit the iterations on those polygons. Adding more polygons expectedly made the shape darker. I also decreased noise in the multipolygons to make the shapes more recognizable. I changed seed to 1 for both to add variety from the original code and changed the color.
+
+```{r}
+tic()
+dat <- square |> 
+  grow_polygon(iterations = 50, noise = .5, seed = 1) |>
+  grow_multipolygon(n = 100, iterations = 500, noise = .5, seed = 1)
+toc()
+
+show_multipolygon(dat, fill = "darkolivegreen4")
+```
+
+# Splotches
+
+## Exercise 2
+
+```{r}
+# define a function to generate fewer polygons with fewer vertices 
+splotch <- function(seed, layers = 10) {
+  set.seed(seed)
+  square_l <- transpose(tibble(
+    x = c(0, 1, 1, 0, 0),
+    y = c(0, 0, 1, 1, 0),
+    seg_len = c(1, 1, 1, 1, 0)
+  ))
+  square_l |> 
+    grow_polygon_l(iterations = 10, noise = .5, seed = seed) |>
+    grow_multipolygon_l(n = layers, iterations = 500, noise = .8, seed = seed) 
+}
+```
+
+```{r}
+tic()
+#results 
+splotch_1 <- splotch(seed = 12) 
+splotch_2 <- splotch(seed = 34)
+splotch_3 <- splotch(seed = 56)
+splotch_4 <- splotch(seed = 150)
+toc()
+```
+
+```{r}
+#exploring colors 
+show_multipolygon(splotch_1, "chocolate1", alpha = .2)
+show_multipolygon(splotch_2, "cornflowerblue", alpha = .2)
+show_multipolygon(splotch_3, "blueviolet", alpha = .2)
+show_multipolygon(splotch_4, "deeppink", alpha = .5)
+```
+
+Code for these two systems is included in the `splotch.R` and `smudged-hexagon.R` scripts.
+
+1.  Explore the effect of the `layers` argument in the `splotch()` system, and how it interacts with the `alpha` argument to `show_multipolygon()`
+
+The layers argument adds various layers of shapes on top of the original polygon. The more layers, the darker the color and the more shapes produced. The alpha argument is actually responsible for making the color darker.
+
+2.  Create a modified version of the `smudged_hexagon()` system that creates a smudged triangle, or, if you\'re feeling more ambitious and want to read slightly further down the page to look for the code you need, a smudged heart shape!
+
+```{r}
+# defining a function to create a shape with a naturalistic look overlayed on top of a defined triangle
+smudged_triangle <- function(seed, noise1 = 0, noise2 = 2, noise3 = 0.5) {
+  set.seed(seed)
+  
+  # define triangular base shape
+  theta <- (0:3) * pi / 1.5
+  triangle <- tibble(
+    x = sin(theta),
+    y = cos(theta),
+    seg_len = edge_length(x, y, lead(x), lead(y))
+  )
+  triangle$seg_len[4] <- 0
+  triangle <- transpose(triangle)
+  base <- triangle |> 
+    grow_polygon_l(
+      iterations = 30, 
+      noise = noise1
+    )
+  
+  # define intermediate-base-shapes in clusters
+  polygons <- list()
+  ijk <- 0
+  for(i in 1:3) {
+    base_i <- base |> 
+      grow_polygon_l(
+        iterations = 50, 
+        noise = noise2
+      )
+    
+    for(j in 1:3) {
+      base_j <- base_i |> 
+        grow_polygon_l(
+          iterations = 50, 
+          noise = noise2
+        )
+      
+      # grow 10 polygons per intermediate-base
+      for(k in 1:10) {
+        ijk <- ijk + 1
+        polygons[[ijk]] <- base_j |>
+          grow_polygon_l(
+            iterations = 500, 
+            noise = noise3
+          ) |>
+          transpose() |>
+          as_tibble() |>
+          mutate(across(.fn = unlist))
+      }
+    }
+  }
+  
+  # return as data frame
+  bind_rows(polygons, .id = "id")
+}
+```
+
+```{r}
+tic()
+dat <- smudged_triangle(seed = 1)
+toc()
+```
+
+```{r}
+dat |> show_multipolygon(fill = "springgreen3")
+```
+
+3.  In the \"layered\" smudged hexagon example (the one with three hexagons of different colours), why did I include the calls to `mutate()` and `arrange()`? What would have happened without that code?
+
+The call to mutate() modifies the dataframe by assigning a unique ID to each triangle and the arrange() call orders rows by column values using the id column, so it arranges the triangles by their unique IDs. Without these columns, only one triangle would be produced because the code is originally designed for only one triangle.
+
+```{r}
+dat <- bind_rows(
+  smudged_triangle(seed = 11),
+  smudged_triangle(seed = 44),
+  smudged_triangle(seed = 88),
+  .id = "source"
+) 
+
+ggplot(dat, aes(x, y, group = id, fill = factor(source))) +
+  geom_polygon(alpha = .02, show.legend = FALSE) + 
+  theme_void() + 
+  scale_fill_manual(values = c(
+    "#ff1b8d", "#ffda00", "#1bb3ff"
+  )) +
+  coord_equal() 
+```
+
+## Exercise 3
+
+Code for this system is included in the `perlin-blob.R` script. You can also find analogous code for the Perlin heart system describe in in the next section in the `perlin-heart.R` script.
+
+1.  Try playing around with these two systems. See if you can reproduce the same \"qualitative variations\" with `perlin_heart()` that I showed above with `perlin_blob()`
+
+2.  Explore the effect of modifying the arguments. It should be possible to produce some very wild looking shapes!
+
+## Exercise 4
+
+## Exercise 5
+
+## Exercise 6
+
+## Exercise 7
+
+## Exercise 8
