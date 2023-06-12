@@ -1618,3 +1618,38 @@ plot(
     with_blend(triangle, "tree", blend_type = "xor")
 )
 ```
+
+# Task 4
+
+Putting it all together by adding the glow effect to the random shape I made in task 3.
+
+```{r}
+#define a plotting function called "show_polygon" to display a polygon
+show_polygon <- function(polygon, show_vertices = TRUE, ...) {
+  #create an object called "pic" that is a polygon 
+  pic <- ggplot(polygon, aes(x, y)) +
+    #making the lines black 
+    geom_polygon(colour = "green", fill = NA, show.legend = FALSE, ...) + 
+    coord_equal() +
+    #assigning the theme so there is nothing displayed besides the edges 
+    theme_void() 
+  # showing the points on nodes where edges connect  
+  if(show_vertices == TRUE) {
+    #making the points black and defining the point size 
+    pic <- pic + geom_point(colour = "green", size = 1)
+  }
+  return(pic)
+}
+
+# using function to display the polygon 
+show_polygon(square)
+
+plot(
+    #plot leaves with glowing yellow color around them 
+    with_outer_glow(pic, colour = "lightgoldenrod1", sigma = 5, expand = 3)
+)
+```
+
+What was new for you? What was familiar? What did you learn?
+
+None of the CHOYOA assignment was familiar to me. The only coding experience I have is from this course in the context of statistics. I found this assignment extremely challenging. I learned something new in every exercise but I think it would have been more helpful to have a little more explanation from the workshop about what the code is doing for each specific function and not just an overall explanation. For someone with limited coding experience and who is not super familiar with the functions and syntax it is really confusing to digest and understand the code on your own when you have never seen it before and there is little guidance. I learned a lot about making random shapes with code and adding interesting elements to make them more complex. I also learned a lot about using a package's full potential and how to understand what packages do.
