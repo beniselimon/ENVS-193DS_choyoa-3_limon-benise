@@ -634,7 +634,7 @@ Attaching package: 'purrr'</code></pre>
 <span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="co">#use toc function to note the current timer and compute elapsed time since tic ran</span></span>
 <span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>52.548 sec elapsed</code></pre>
+<pre><code>75.869 sec elapsed</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -681,7 +681,7 @@ Attaching package: 'purrr'</code></pre>
 <span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">grow_multipolygon</span>(<span class="at">n =</span> <span class="dv">100</span>, <span class="at">iterations =</span> <span class="dv">500</span>, <span class="at">noise =</span> .<span class="dv">5</span>, <span class="at">seed =</span> <span class="dv">1</span>)</span>
 <span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>52.454 sec elapsed</code></pre>
+<pre><code>74.577 sec elapsed</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">show_multipolygon</span>(dat, <span class="at">fill =</span> <span class="st">"darkolivegreen4"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -791,7 +791,7 @@ Caused by warning:
 <span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>splotch_4 <span class="ot">&lt;-</span> <span class="fu">splotch</span>(<span class="at">seed =</span> <span class="dv">150</span>)</span>
 <span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>8.597 sec elapsed</code></pre>
+<pre><code>11.881 sec elapsed</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -882,7 +882,7 @@ Caused by warning:
 <span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">smudged_triangle</span>(<span class="at">seed =</span> <span class="dv">1</span>)</span>
 <span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>26.009 sec elapsed</code></pre>
+<pre><code>35.671 sec elapsed</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -1458,7 +1458,7 @@ Caused by warning:
 <span id="cb87-156"><a href="#cb87-156" aria-hidden="true" tabindex="-1"></a><span class="fu">animated_perlin_heart</span>(<span class="at">seed =</span> <span class="dv">99</span>)</span>
 <span id="cb87-157"><a href="#cb87-157" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>14.861 sec elapsed</code></pre>
+<pre><code>22.191 sec elapsed</code></pre>
 </div>
 </div>
 </section>
@@ -1898,6 +1898,43 @@ Caused by warning:
 </div>
 </div>
 </section>
+</section>
+<section id="task-4" class="level1">
+<h1>Task 4</h1>
+<p>Putting it all together by adding the glow effect to the random shape I made in task 3.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="co">#define a plotting function called "show_polygon" to display a polygon</span></span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>show_polygon <span class="ot">&lt;-</span> <span class="cf">function</span>(polygon, <span class="at">show_vertices =</span> <span class="cn">TRUE</span>, ...) {</span>
+<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">#create an object called "pic" that is a polygon </span></span>
+<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a>  pic <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(polygon, <span class="fu">aes</span>(x, y)) <span class="sc">+</span></span>
+<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">#making the lines black </span></span>
+<span id="cb103-6"><a href="#cb103-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_polygon</span>(<span class="at">colour =</span> <span class="st">"green"</span>, <span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, ...) <span class="sc">+</span> </span>
+<span id="cb103-7"><a href="#cb103-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
+<span id="cb103-8"><a href="#cb103-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">#assigning the theme so there is nothing displayed besides the edges </span></span>
+<span id="cb103-9"><a href="#cb103-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_void</span>() </span>
+<span id="cb103-10"><a href="#cb103-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># showing the points on nodes where edges connect  </span></span>
+<span id="cb103-11"><a href="#cb103-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(show_vertices <span class="sc">==</span> <span class="cn">TRUE</span>) {</span>
+<span id="cb103-12"><a href="#cb103-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">#making the points black and defining the point size </span></span>
+<span id="cb103-13"><a href="#cb103-13" aria-hidden="true" tabindex="-1"></a>    pic <span class="ot">&lt;-</span> pic <span class="sc">+</span> <span class="fu">geom_point</span>(<span class="at">colour =</span> <span class="st">"green"</span>, <span class="at">size =</span> <span class="dv">1</span>)</span>
+<span id="cb103-14"><a href="#cb103-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb103-15"><a href="#cb103-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(pic)</span>
+<span id="cb103-16"><a href="#cb103-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb103-17"><a href="#cb103-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb103-18"><a href="#cb103-18" aria-hidden="true" tabindex="-1"></a><span class="co"># using function to display the polygon </span></span>
+<span id="cb103-19"><a href="#cb103-19" aria-hidden="true" tabindex="-1"></a><span class="fu">show_polygon</span>(square)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="choyoa-3_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(</span>
+<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">#plot leaves with glowing yellow color around them </span></span>
+<span id="cb104-3"><a href="#cb104-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">with_outer_glow</span>(pic, <span class="at">colour =</span> <span class="st">"lightgoldenrod1"</span>, <span class="at">sigma =</span> <span class="dv">5</span>, <span class="at">expand =</span> <span class="dv">3</span>)</span>
+<span id="cb104-4"><a href="#cb104-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="choyoa-3_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>What was new for you? What was familiar? What did you learn?</p>
+<p>None of the CHOYOA assignment was familiar to me. The only coding experience I have is from this course in the context of statistics. I found this assignment extremely challenging. I learned something new in every exercise but I think it would have been more helpful to have a little more explanation from the workshop about what the code is doing for each specific function and not just an overall explanation. For someone with limited coding experience and who is not super familiar with the functions and syntax it is really confusing to digest and understand the code on your own when you have never seen it before and there is little guidance. I learned a lot about making random shapes with code and adding interesting elements to make them more complex. I also learned a lot about using a package’s full potential and how to understand what packages do.</p>
 </section>
 
 </main>
