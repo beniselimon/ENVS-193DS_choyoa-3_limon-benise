@@ -681,6 +681,7 @@ The call to mutate() modifies the dataframe by assigning a unique ID to each tri
 
 ```{r}
 dat <- bind_rows(
+  #smudging a triangle
   smudged_triangle(seed = 11),
   smudged_triangle(seed = 44),
   smudged_triangle(seed = 88),
@@ -1288,6 +1289,7 @@ plot(pic)
 ## Exercise 1
 
 ```{r packages}
+#loading in packages
 library(dplyr)
 library(tibble)
 library(ggplot2)
